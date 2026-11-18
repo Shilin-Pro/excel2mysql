@@ -219,7 +219,7 @@ Get-NetTCPConnection -LocalPort 8700 -State Listen |
 ```ini
 LLM_API_KEY=sk-xxx           # KEY=VALUE
 LLM_MODEL: deepseek-ai/DeepSeek-V3    # KEY: VALUE 也行
-set MYSQL_PASSWORD=123456    # Windows cmd 风格也认
+set MYSQL_PASSWORD=你的密码    # Windows cmd 风格也认
 ```
 
 需要的键：
@@ -372,7 +372,7 @@ MySQL 8.0.35，`127.0.0.1:3306`，`root`。**只有两个业务库**：
 
 > **`t1_header_noise` 是可删的测试残留**，如果只想演示干净的 10 张表，先删它：
 > ```powershell
-> $env:MYSQL_PWD="123456"
+> $env:MYSQL_PWD="你的密码"
 > mysql -h 127.0.0.1 -u root --default-character-set=utf8mb4 `
 >   -e "DROP TABLE ``excel_import``.``t1_header_noise``;"
 > ```
@@ -956,7 +956,7 @@ $PY excel2mysql.py batch "folder\" --db mydb          # 批量
 $PY detect_traps.py --db excel_import
 
 # 看数据
-mysql -h 127.0.0.1 -u root -p123456 --default-character-set=utf8mb4 -e "SHOW DATABASES"
+mysql -h 127.0.0.1 -u root -p你的密码 --default-character-set=utf8mb4 -e "SHOW DATABASES"
 ```
 
 **三个最容易踩的坑**：

@@ -91,7 +91,7 @@ LLM_API_BASE=https://api.siliconflow.cn/v1
 LLM_MODEL=deepseek-ai/DeepSeek-V3
 LLM_TIMEOUT=120
 
-MYSQL_PASSWORD=123456
+MYSQL_PASSWORD=你的密码
 ```
 
 **之后直接启动就行，不用每次设环境变量：**
@@ -136,7 +136,7 @@ python webapp.py
 LLM_API_KEY=sk-xxx
 LLM_API_KEY: sk-xxx          # 冒号也行
 
-set MYSQL_PASSWORD=123456    # Windows cmd 的写法也能认
+set MYSQL_PASSWORD=你的密码    # Windows cmd 的写法也能认
 
 sk-xxxxxxxxxxxx              # 单独一行，自动当成 LLM_API_KEY
 ```

@@ -60,7 +60,7 @@ def _load_config_file(path: str) -> dict:
         LLM_API_KEY=sk-xxx
         LLM_API_KEY: sk-xxx
         sk-xxx                          （单独一行，自动当成 LLM_API_KEY）
-        set MYSQL_PASSWORD=123456       （Windows cmd 风格，也能认）
+        set MYSQL_PASSWORD=你的密码       （Windows cmd 风格，也能认）
     """
     result = {}
     if not os.path.exists(path):
