@@ -1,0 +1,7 @@
+﻿refund_id,order_id,order_item_id,refund_no,refund_type,refund_reason,refund_amount,apply_time,finish_time,refund_status
+8001,3009,5010,REF202602250001,refund_only,商品与描述不符,799.00,2026-02-25 10:20:00,2026-02-27 15:30:00,completed
+8002,3015,5018,REF202604060002,return_refund,商品破损,219.00,2026-04-06 09:12:00,2026-04-09 11:00:00,completed
+8003,3018,5021,REF202605090003,exchange,尺码不合适,0.00,2026-05-09 14:05:00,2026-05-12 16:20:00,completed
+8004,3013,,REF202603200004,refund_only,不想要了,500.00,2026-03-20 09:30:00,2026-03-21 10:00:00,rejected
+8005,3010,5011,REF202603050005,return_refund,口味不喜欢,89.90,2026-03-05 18:40:00,2026-03-08 09:15:00,completed
+8006,3002,,REF202601100006,refund_only,重复下单,397.90,2026-01-10 08:20:00,,applied

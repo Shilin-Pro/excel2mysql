@@ -1,0 +1,100 @@
+# ============================================================
+# excel2mysql .gitignore
+#
+# 原则：
+#   1. 密钥、密码、API key —— 绝对不提交
+#   2. 可再生的中间产物 —— 不提交（虚拟环境 / 缓存 / 生成物）
+#   3. 测试数据和测试用例 —— 必须提交，否则别人 clone 下来跑不了测试
+#   4. 真实业务数据 —— 不提交（但用白名单放行 testdata/）
+# ============================================================
+
+# ---------- 虚拟环境 ----------
+.venv/
+venv/
+env/
+
+# ---------- Python 缓存 ----------
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+
+# ---------- 密钥与配置（绝对不能提交）----------
+# 这几个文件里有 MySQL 密码和 LLM API key
+.env
+.env.local
+.env.*.local
+环境变量.txt
+config.txt
+
+# ---------- 编辑器 / 系统 ----------
+.vscode/
+.idea/
+*.swp
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ---------- 日志 ----------
+*.log
+_web.log
+_web.err
+
+# ---------- 备份目录 ----------
+# 手工备份，不进版本库（git 本身就是版本管理）
+_backup_*/
+*.bak
+*.bak_*
+
+# ---------- Web 上传的临时文件 ----------
+# 每次上传都新建带随机前缀的副本，从不清���，文件数会失控
+_uploads/
+
+# ---------- 真实业务数据（红线）----------
+# 全局忽略数据文件，防止把客户的真实 Excel 误提交
+*.xlsx
+*.xls
+*.xlsm
+*.csv
+*.docx
+*.pdf
+
+# 但测试数据必须放行 —— 下面用 ! 例外
+# （.gitignore 规则是后面的覆盖前面的，顺序不能动）
+
+# ---------- 测试数据：提交 ----------
+# 理由：没有这些文件，test_all.py 里的 47 项测试全部报「文件不存在」。
+# 别人 clone 下来第一件事就是跑测试，跑不起来等于没法接手。
+# 这些是专门造的脏数据样例，不含任何真实业务信息，总共约 95 KB。
+!testdata/
+!testdata/**/*.xlsx
+!testdata/**/*.csv
+!testdata/**/*.md
+!testdata/**/*.txt
+
+# 电商演示数据集（test_traps.py 的数据源之一）
+!电商数据表集构建e2sql/
+!电商数据表集构建e2sql/**/*.csv
+
+# README 用的截图（文档要能正常显示）
+!assets/
+!assets/**/*.png
+!assets/**/*.jpg
+
+# 但测试过程中【生成】的产物不提交
+testdata/schema_prompt.txt
+testdata/*/schema_prompt.txt
+
+# ---------- 生成的 Prompt（中间产物）----------
+# 这些是从库里跑出来的 Prompt 快照，随时能重新生成：
+#   python excel2mysql.py schema --db xxx --out prompt.txt
+# 根目录这些 prompt_*.txt 是调优过程中的历史版本，属于调试残留
+prompt_*.txt
+schema_prompt*.txt
+schemas/
+_prompt_out/
+prompt_with_traps.txt
+traps_detail.txt
+ddl*.sql

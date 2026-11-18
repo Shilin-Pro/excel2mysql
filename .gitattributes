@@ -1,0 +1,52 @@
+# ============================================================
+# excel2mysql .gitattributes
+#
+# 为什么需要这个文件：
+#
+# 本机 core.autocrlf=true（Windows 全局设置），这会让 git 在
+# checkout 时把 LF 转成 CRLF。对本项目有两个具体危害：
+#
+#   1. 测试数据的行尾被改写，测试就不再测原来那个文件了。
+#      尤其是 testdata/csv8_embedded_newline.csv —— 它专门用来测
+#      「字段值里内嵌换行」，行尾被替换会直接改变测试语义。
+#
+#   2. .xlsx 是 zip 二进制。没标 binary 时 git 可能尝试处理内容，
+#      轻则 diff 不显示，重则文件损坏。
+#
+# 所以：测试数据 + 二进制文件，一律禁止 git 碰行尾。
+# ============================================================
+
+# ---------- 二进制：绝对不做行尾转换 ----------
+# xlsx/xls 本质是 zip，任何字节改动都会让 openpyxl 读不出来
+*.xlsx  binary
+*.xls   binary
+*.xlsm  binary
+*.docx  binary
+*.pdf   binary
+*.png   binary
+*.jpg   binary
+*.jpeg  binary
+*.gif   binary
+*.ico   binary
+
+# ---------- 测试数据：保持原始字节 ----------
+# -text 的意思是「不要当成文本处理」，git 就不会改行尾。
+# 这些文件是测试的基准输入，必须和造出来时一模一样。
+testdata/**  -text
+电商数据表集构建e2sql/**  -text
+
+# ---------- 源码：统一用 LF 存储 ----------
+# 仓库里存 LF，checkout 到 Windows 时由 autocrlf 决定工作区形态。
+# 这样在 Linux/Mac 上 clone 也不会全是 CRLF。
+*.py      text eol=lf
+*.md      text eol=lf
+*.txt     text eol=lf
+*.json    text eol=lf
+*.yml     text eol=lf
+*.yaml    text eol=lf
+*.toml    text eol=lf
+.gitignore    text eol=lf
+.gitattributes text eol=lf
+
+# ---------- 例外：测试用的散装文本 ----------
+# testdata 下已经整体 -text 了，这里不用再单独列
