@@ -611,21 +611,102 @@ run 全流程   通过 5，失败 0
 
 ### P2：可以以后再说
 
-4. **没有 git 仓库**
-   `E:\dify实战\excel2mysql` **不是 git 仓库**（`git status` 会报 not a repository）。
-   有个 `.gitignore` 但没初始化。建议立即 `git init` 把所有代码纳入版本管理——
-   现在全靠 `_backup_*` 目录手工备份。
-
-5. **`webapp.py` 里的接口没有自动化测试**
+4. **`webapp.py` 里的接口没有自动化测试**
    `test_traps.py` 覆盖了检测器，但 Web 的 5 个步骤（`/api/parse`、
    `/api/import`、`/api/schema` 等）仍然只有手工验证。
    本次遇到过的「页面显示无有效数据但 CLI 正常」，就是这类接口层问题。
 
-6. **没有 `pytest`**
+5. **没有 `pytest`**
    测试都是手写的计数式 `assert`，能跑但没有 fixture、没有参数化。
    别急着迁移，现在能跑就够了。
 
-> 曾经列在这里的「陷阱检测无测试覆盖」已经解决 —— 见第 9 节，已补 `test_traps.py`（18 项）。
+> 曾经列在这里的两项已经解决：
+> - 「陷阱检测无测试覆盖」→ 已补 `test_traps.py`（18 项），见第 9 节
+> - 「没有 git 仓库」→ 已初始化，见第 11.5 节
+
+---
+
+## 11.5 版本管理（已初始化）
+
+移交前已执行 `git init`，当前状态：
+
+```
+分支:     main
+提交:     1 个（02429fb 初始化：excel2mysql 项目基线）
+跟踪文件: 77 个
+工作区:   干净
+```
+
+### 为什么 `.gitignore` 不是简单地「忽略所有 csv/xlsx」
+
+项目原来的 `.gitignore` 里有 `testdata/` 和全局 `*.csv` / `*.xlsx`。
+这在**自用**时没问题，但会直接破坏交接：
+
+> 新同事 clone 下来 → `testdata/` 是空的 →
+> `test_all.py` 的 47 项测试**全部报「文件不存在」** →
+> 而且其中 10 个电商 csv **没有生成器**，丢了就找不回来。
+
+现在的规则是「全局忽略数据文件 + 白名单放行测试数据」：
+
+| 内容 | 是否提交 | 原因 |
+|---|---|---|
+| `testdata/`（40 个文件，77 KB）| ✅ 提交 | 没有它跑不了测试；是专门造的脏数据样例，不含真实业务信息 |
+| `电商数据表集构建e2sql/`（10 个 csv）| ✅ 提交 | `test_traps.py` 的数据源 |
+| `assets/`（8 张截图）| ✅ 提交 | README 引用，不提交文档就缺图 |
+| `.env` | ❌ 忽略 | 含 MySQL 密码和 LLM API key |
+| `.venv/` | ❌ 忽略 | 可重建 |
+| `_uploads/` | ❌ 忽略 | 229 个上传残留 |
+| `_backup_*/` | ❌ 忽略 | git 本身就是版本管理 |
+| `prompt_*.txt`、`schema_prompt*.txt` | ❌ 忽略 | 从库里随时能重新生成的中间产物 |
+
+### `.gitattributes` 的作用（别删）
+
+本机 `core.autocrlf=true`，会让 git 在 checkout 时把 LF 改成 CRLF。
+这对本项目有具体危害：
+
+- `testdata/csv8_embedded_newline.csv` 专门测「字段值里内嵌换行」，
+  行尾被替换会**直接改变测试语义**
+- `.xlsx` 是 zip 二进制，被当文本处理可能损坏
+
+所以 `.gitattributes` 里把 `testdata/**` 和 `电商数据表集构建e2sql/**` 标成 `-text`，
+二进制文件标成 `binary`，源码统一 `eol=lf`。
+
+**验证过**：clone 出来的 `case1_标题与空格.xlsx` / `csv8_embedded_newline.csv` /
+`case5_gbk编码.csv` 三个文件，SHA256 与源仓库**完全一致**。
+
+### 首次提交哈希
+
+```
+02429fb  初始化：excel2mysql 项目基线（47 项测试全绿）
+```
+
+如果后续改坏了，回到这个基线：
+
+```powershell
+git stash                       # 先暂存当前改动
+git checkout 02429fb -- .       # 恢复基线内容
+# 或者彻底重置（会丢改动，先确认）
+git reset --hard 02429fb
+```
+
+### 提交前必做的检查
+
+`.env` 里有真实的 API key 和数据库密码。提交前务必确认它没被跟踪：
+
+```powershell
+git status --porcelain --ignored | Select-String "\.env"
+# 应该看到 !! .env（!! 表示被忽略，正确）
+# 如果看到 ?? .env（?? 表示待添加，危险）
+```
+
+如果不小心提交了 `.env`：
+
+```powershell
+git rm --cached .env            # 从版本库移除，保留本地文件
+git commit -m "移除误提交的 .env"
+# 注意：密钥已进入历史，必须去服务商后台【重新生成】key，
+#       光删文件没用，历史里还在
+```
 
 ---
 
@@ -644,8 +725,10 @@ run 全流程   通过 5，失败 0
    起 `webapp.py`，用 `testdata\case1_标题与空格.xlsx` 走一遍五步。
    注意第 3 步的「适配」模式会调 LLM，要等 60~90 秒。
 
-4. **`git init`**
-   把当前状态作为第一个 commit。这是最容易被忽略但最该做的一步。
+4. **看一眼 git 历史**
+   `git log --oneline` 只有一个基线提交（`02429fb`）。
+   后续改动请按「一个逻辑改动一个 commit」提交，别攒成大杂烩——
+   这个项目的历史教训就是 6 个缺陷攒在一起，全靠手工备份目录回溯。
 
 5. **确认继续做什么**
    需要和业务方/需求方确认下一阶段目标。技术上可选的方向：
@@ -810,22 +893,27 @@ WHERE TABLE_SCHEMA = 'excel_import';
 
 | 项目 | 位置 |
 |---|---|
-| 代码 | `E:\dify实战\excel2mysql\` |
+| **代码仓库** | `E:\dify实战\excel2mysql\`（git，分支 `main`）|
 | 主脚本 | `excel2mysql.py`（4170 行）|
 | Web 向导 | `webapp.py`（3667 行）|
 | 陷阱检测 | `detect_traps.py`（1480 行）|
-| 详细功能文档 | `README.md`（44 KB）|| LLM 推断边界 | `docs/LLM辅助推断.md` |
-| 配置 | `.env`（含 key，不进 git）|
-| 测试数据 | `testdata/`（可重建）|
-| 本次移交前的备份 | `_backup_handover_20261117_234301/` |
+| 测试入口 | `test_all.py`（47 项）|
+| 详细功能文档 | `README.md`（44 KB）|
+| LLM 推断边界 | `docs/LLM辅助推断.md` |
+| 移交文档 | `HANDOVER.md`（本文）|
+| 配置 | `.env`（含 key，**不进 git**）|
+| 测试数据 | `testdata/`（77 KB，**已提交**，不要删）|
+| 版本管理配置 | `.gitignore`、`.gitattributes`（**两者都别删**）|
+| 手工备份（回滚用） | `_backup_handover_20261117_234301/` |
 
 ### 备份说明
 
-项目里有几个备份目录，不要误当成源码：
+项目里有几个备份目录，不要误当成源码（都不进 git）：
 
-- `_backup_handover_20261117_234301/` —— **本次移交前的状态**（推荐用这个回滚）
+- `_backup_handover_20261117_234301/` —— **本次移交前的状态**（修复 6 个缺陷之前）
 - `_backup_20261117_123549/` —— 陷阱检测集成之前的状态
-- 两者都不进 git（`.gitignore` 里有 `_backup_*/`）
+
+现在有了 git，日常回滚优先用 `git`；这两个目录留着当「git 之前」的历史快照。
 
 ---
 
@@ -839,6 +927,16 @@ $PY = ".venv\Scripts\python.exe"
 
 # 测试（期望 47 项全绿）
 $PY test_all.py
+
+# git（仓库已初始化，基线提交 02429fb）
+git status                          # 看有没有未提交改动
+git log --oneline                   # 看历史
+git diff                            # 看改了什么
+git add -A; git commit -m "说明"     # 提交
+# 提交前务必确认 .env 没被跟踪：
+git status --porcelain --ignored | Select-String "\.env"
+#   看到 !! .env → 正确（被忽略）
+#   看到 ?? .env → 危险（即将提交密钥）
 
 # Web 向导
 $PY webapp.py                       # http://127.0.0.1:8700
