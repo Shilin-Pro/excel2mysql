@@ -123,9 +123,39 @@ def main():
 
     # 密码从 .env 读，不写死在源码里（见 test_common.py）
     sys.path.insert(0, HERE)
-    from test_common import test_env as _test_env
+    from test_common import get_mysql_password, test_env as _test_env
+
     env = _test_env()
-    env.setdefault("MYSQL_PASSWORD", "")
+    pw = get_mysql_password()
+
+    # 没有密码时直接停下，别让 47 项测试各自报一次 Access denied。
+    #
+    # 这个提示很必要：.env 不进 git，所以别人 clone 下来一定没有密码。
+    # 不提示的话，接手的第一个画面就是满屏 FAIL + sqlalche.me 链接，
+    # 会以为代码坏了，实际只是没配密码。
+    if not pw:
+        print("=" * 74)
+        print("  无法继续：没有读到 MySQL 密码")
+        print("=" * 74)
+        print()
+        print("  .env 不在版本库里（里面有密钥，不能提交），")
+        print("  所以 clone 下来后需要自己建一个。")
+        print()
+        print("  在项目根目录新建 .env，内容：")
+        print()
+        print("      MYSQL_HOST = 127.0.0.1")
+        print("      MYSQL_PORT = 3306")
+        print("      MYSQL_USER = root")
+        print("      MYSQL_PASSWORD = 你的MySQL密码")
+        print()
+        print("  或者临时设环境变量：")
+        print('      $env:MYSQL_PASSWORD = "你的MySQL密码"')
+        print()
+        print("  详见 HANDOVER.md 第 5 节「配置」。")
+        print()
+        return 1
+
+    env.setdefault("MYSQL_PASSWORD", pw)
 
     results = []
     for name, script in SUITES:

@@ -21,17 +21,54 @@ cd "E:\dify实战\excel2mysql"
 # 2. 中文输出必须设这个，否则 Windows 控制台是 cp1252/cp437 会乱码
 $env:PYTHONIOENCODING="utf-8"
 
-# 3. 确认配置就绪（.env 里已有 MySQL 密码和 LLM key）
+# 3. 配密码（clone 下来的话，这一步不能跳过，见下面说明）
+if (-not (Test-Path .env)) {
+    @"
+MYSQL_HOST = 127.0.0.1
+MYSQL_PORT = 3306
+MYSQL_USER = root
+MYSQL_PASSWORD = 你的MySQL密码
+"@ | Out-File -FilePath .env -Encoding utf8
+}
+
+# 4. 确认配置就绪
 .venv\Scripts\python.exe excel2mysql.py --help
 
-# 4. 跑一遍全部测试，确认环境是好的
+# 5. 跑一遍全部测试，确认环境是好的
 .venv\Scripts\python.exe test_all.py
-#    期望：Excel 回归 OK / CSV 变体 9 项 / run 全流程 5 项，全绿
+#    期望：Excel 回归 15 / CSV 变体 9 / run 全流程 5 / 陷阱检测 18 = 47 项全绿
 
-# 5. 起 Web 向导
+# 6. 起 Web 向导
 .venv\Scripts\python.exe webapp.py
 #    浏览器打开 http://127.0.0.1:8700
 ```
+
+### ⚠️ clone 之后第一件事：建 `.env`
+
+`.env` 里有 MySQL 密码和 LLM API key，**不可能提交到 git**。
+所以如果这个项目是你 clone 下来的，`.env` 一定不存在。
+
+不建会怎样？`test_all.py` 会直接拦住你，给出能照做的提示，
+而不是让 47 项测试各报一次 `Access denied`：
+
+```
+====================================================================
+  无法继续：没有读到 MySQL 密码
+====================================================================
+
+  .env 不在版本库里（里面有密钥，不能提交），
+  所以 clone 下来后需要自己建一个。
+
+  在项目根目录新建 .env，内容：
+
+      MYSQL_HOST = 127.0.0.1
+      MYSQL_PORT = 3306
+      MYSQL_USER = root
+      MYSQL_PASSWORD = 你的MySQL密码
+```
+
+> 这一步实测过：clone 干净副本 → 跑测试被拦住 → 按提示建好 `.env`
+> → 47 项全绿。所以照做就行。
 
 **环境依赖清单**（`.venv` 里已装好，换机器要重装）：
 
