@@ -25,7 +25,10 @@ MODEL = "deepseek-ai/DeepSeek-V3"
 
 def get_engine():
     from sqlalchemy import create_engine
-    pw = os.environ.get("MYSQL_PASSWORD", "123456")
+    # 密码从 .env 读，不写死在源码里
+    sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+    from test_common import get_mysql_password
+    pw = get_mysql_password()
     return create_engine(
         f"mysql+pymysql://root:{pw}@127.0.0.1:3306/{DB}?charset=utf8mb4")
 

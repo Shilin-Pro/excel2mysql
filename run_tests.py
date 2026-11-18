@@ -14,6 +14,10 @@ import os
 import subprocess
 import sys
 
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from test_common import get_mysql_password as _get_password
+from test_common import test_env as _test_env
+
 HERE = os.path.dirname(os.path.abspath(__file__))
 PY = sys.executable
 SCRIPT = os.path.join(HERE, "excel2mysql.py")
@@ -33,9 +37,8 @@ results = []
 
 
 def run(args, label):
-    env = os.environ.copy()
-    env["PYTHONIOENCODING"] = "utf-8"
-    env.setdefault("MYSQL_PASSWORD", "123456")
+    # 密码从 .env 读，不写死在源码里（见 test_common.py）
+    env = _test_env()
     r = subprocess.run([PY, SCRIPT] + args, cwd=HERE, env=env,
                        capture_output=True, text=True,
                        encoding="utf-8", errors="replace")
@@ -45,7 +48,7 @@ def run(args, label):
 def mysql_query(sql):
     """用 python 直连 MySQL 查询（避免依赖 mysql.exe 路径）"""
     from sqlalchemy import create_engine, text
-    pw = os.environ.get("MYSQL_PASSWORD", "123456")
+    pw = _get_password()
     eng = create_engine(
         f"mysql+pymysql://root:{pw}@127.0.0.1:3306/{DB}?charset=utf8mb4")
     with eng.connect() as c:

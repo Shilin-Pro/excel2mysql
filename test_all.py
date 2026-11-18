@@ -121,9 +121,11 @@ def cleanup_test_databases():
 def main():
     keep = "--keep" in sys.argv
 
-    env = os.environ.copy()
-    env["PYTHONIOENCODING"] = "utf-8"
-    env.setdefault("MYSQL_PASSWORD", "123456")
+    # 密码从 .env 读，不写死在源码里（见 test_common.py）
+    sys.path.insert(0, HERE)
+    from test_common import test_env as _test_env
+    env = _test_env()
+    env.setdefault("MYSQL_PASSWORD", "")
 
     results = []
     for name, script in SUITES:
